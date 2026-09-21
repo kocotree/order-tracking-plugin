@@ -1,0 +1,23 @@
+{
+  "name": "order-tracking",
+  "version": "0.1.0",
+  "description": "以本人管理员身份在 Codex 操作跟单管理系统。",
+  "author": {"name": "KOCOTREE"},
+  "homepage": "https://github.com/kocotree/order-tracking-plugin",
+  "repository": "https://github.com/kocotree/order-tracking-plugin",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "跟单管理系统",
+    "shortDescription": "管理员订单、发货、返修与资料操作",
+    "longDescription": "连接跟单管理系统的远程 MCP，以本人管理员权限查询和处理现有 Web 业务。",
+    "developerName": "KOCOTREE",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://order-tracking.kktree.cn",
+    "defaultPrompt": [
+      "用跟单管理系统查询我的管理员账号和订单。",
+      "用跟单管理系统查询指定日期的发货与收货情况。"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "order-tracking": {
+      "type": "http",
+      "url": "https://order-tracking.kktree.cn/mcp"
+    }
+  }
+}
