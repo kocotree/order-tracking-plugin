@@ -1,14 +1,14 @@
 # Issue #152 验收记录
 
-记录日期：2026-09-21。目标 Plugin：`0.1.1`；系统后端基线：`order_tracking` `main` `b1ee254b894c322689f0a2446b771ea1eb15ce7a`（生产 v1.0.18）；本机 Codex CLI：`0.149.1`。MCP 工具 schema 以该后端提交为准。生产业务数据、真实通知和共享配置均未改动。
+记录日期：2026-09-21。目标 Plugin：`0.1.1`；系统后端基线：`order_tracking` `main` `b1ee254b894c322689f0a2446b771ea1eb15ce7a`（生产 v1.0.18）；本机 Codex CLI：`0.149.1`。MCP 工具 schema 以该后端提交为准。本次 Plugin 验证未改动生产业务数据、真实通知或生产配置。
 
 | 验收项 | 当前证据 | 状态 |
 |---|---|---|
 | 五项 MCP 前置 | #151/#153/#154/#155/#156 已合并到上述 `main`；服务端测试结果见各 Issue 实施记录 | 服务端代码已合并 |
 | Plugin 结构与 Skill | plugin-creator `validate_plugin.py`、skill-creator `quick_validate.py`、JSON 解析与 `git diff --check` 通过 | 本地通过 |
-| 本机 Codex 安装 | `codex plugin add` 已加载 `0.1.1`；`codex mcp list` 可见远程 HTTP 服务。`codex mcp login` 实际采用 Plugin 声明的 `client_id=kocotree-order-tracking-codex` 和正确的 resource；因生产元数据 404，在浏览器授权前终止，未保留临时授权 URL | 客户端 ID 传递通过；OAuth 完整握手待验收 |
-| 无登录生产入口 | `POST /mcp` 与 OAuth 两项元数据在 2026-09-21 返回应用 JSON 404。SSH 只读检查确认 v1.0.18 API 和前端容器健康、Nginx 有代理规则，但生产受保护配置及 API 容器均无 `ORDER_TRACKING_MCP_PUBLIC_URL`、`ORDER_TRACKING_MCP_CLIENT_ID`、`ORDER_TRACKING_MCP_FILE_HOSTS`；`/health/ready` 的 200 是前端 HTML | 已定位 MCP 未启用，阻塞真实连接 |
-| 本人 OAuth 与 30 天共同授权 | #151 曾在隔离环境以 CLI 0.149.1 验证登录；本 Plugin 尚未完成真实连接 | 待验收 |
+| 本机 Codex 安装 | `codex plugin add` 已加载 `0.1.1`；`codex mcp list` 可见远程 HTTP 服务，认证状态为 OAuth。`codex mcp login order-tracking` 成功；此前已验证 Plugin 声明的 `client_id=kocotree-order-tracking-codex` 和正确的 resource 会传入登录请求 | 安装与本人 OAuth 登录通过 |
+| 无登录生产入口 | 主任务反馈用户已完成生产 MCP 配置。外部回验：受保护资源元数据和授权服务器元数据均返回 200，resource 与 issuer 指向生产地址；未授权 `POST /mcp initialize` 返回 401。此前的 404 已解除；本任务未复查服务器配置文件 | 生产 MCP 入口通过 |
+| 本人 OAuth 与 30 天共同授权 | 本机 Codex CLI 0.149.1 登录后，仅调用一次 `mcp__order_tracking__get_me`，成功返回角色 `admin`；响应未提供可独立确认账号活跃的字段。跨 Web/Plugin 的 30 天续期、统一退出和停用账号拒绝尚未实测 | 本人连接与只读工具通过；共享会话规则待验收 |
 | 订单 456#、来源刷新、派工与合同 | 后端工具已合并；隔离 Codex 对话与业务回读 | 待验收 |
 | 发货统计、逐箱收货、退回与清单 | 后端工具已合并；隔离 Codex 对话与 Web 对照 | 待验收 |
 | `.xlsx` 本地引用、拖入、上传、预览、确认、下载 | 后端文件工具已合并；Codex 原生 `files` 注入和往返字节未验证 | 待验收 |
@@ -24,27 +24,8 @@
 4. 对同一标准 `.xlsx` 分别用本地引用和拖入附件完成上传、预览、确认与原件下载；记录输入文件与下载文件的字节大小、SHA-256、Codex 版本和工具输入形状。不得记录临时链接或凭据。如果客户端无法生成 `files` 参数，修订文件方案并复验后才能称完整交付。
 5. 核对全部 Web 动作的工具覆盖和实际结果，分别确认保存、业务确认、工厂可见、通知送达与查看。完成前不得把本地结构校验或服务端测试写成业务验收通过。
 
-## 生产 MCP 启用待确认变更
+## 生产 MCP 入口回验
 
-只读证据：GitHub v1.0.18 发布工作流成功，生产 API 与前端镜像均标记为 `b1ee254b894c322689f0a2446b771ea1eb15ce7a` 且容器健康。前端运行中 Nginx 已转发 `/mcp` 和 OAuth 路径。生产受保护文件 `DEPLOY_DIR/deploy/.env.production` 权限为 600，当前文件及 API 容器均无三项 `ORDER_TRACKING_MCP_*` 配置。后端 `app/main.py` 仅在 `mcp_public_url` 非空时注册 MCP 和 OAuth，故该配置缺失可解释当前应用 JSON 404。
+主任务反馈用户已完成生产 MCP 配置。本任务于 2026-09-21 从外部验证：`GET /.well-known/oauth-protected-resource/mcp` 返回 200，resource 为 `https://order-tracking.kktree.cn/mcp`；`GET /.well-known/oauth-authorization-server` 返回 200，issuer 和授权、token、撤销端点均指向该域名；未授权 `POST /mcp initialize` 返回 401。随后本机 Codex 完成 OAuth 登录，并以本人身份成功调用一次只读 `get_me`。本任务没有读取或修改生产配置，也没有执行生产业务写入。
 
-经生产配置变更授权后，在受保护环境文件中只增加以下两项，保留原有键值及权限；OAuth ID 与本 Plugin 的 `oauth.clientId` 精确相同：
-
-```dotenv
-ORDER_TRACKING_MCP_PUBLIC_URL=https://order-tracking.kktree.cn/mcp
-ORDER_TRACKING_MCP_CLIENT_ID=kocotree-order-tracking-codex
-```
-
-`ORDER_TRACKING_MCP_FILE_HOSTS` 目前仍须为空：Codex 原生附件的实际下载主机尚未观测到，服务端会拒绝上传。得到真实附件主机并验证来源后，另按精确主机名加入该配置，再验收文件往返；不能用通配符或猜测主机。生产环境的完整业务验收在此之前仍为待完成。
-
-保存配置后，以当前发布目录 `DEPLOY_DIR/releases/b1ee254b894c322689f0a2446b771ea1eb15ce7a/deploy` 执行 `docker compose --env-file .env.production -f compose.production.yaml config --quiet`，再以同一配置执行 `docker compose --env-file .env.production -f compose.production.yaml up -d --no-deps --no-build --wait --wait-timeout 180 api`。这会重建 API 容器，Web 与小程序的 API 请求可能短暂中断；worker 与前端容器不需重建。未获生产配置和重建授权前不执行。
-
-只读回验：API 容器健康；`GET /.well-known/oauth-protected-resource/mcp` 与 `GET /.well-known/oauth-authorization-server` 返回 200 且 resource/issuer 与生产地址一致；未授权 `POST /mcp` 返回 401 与 OAuth 挑战。可在本机执行：
-
-```sh
-curl -fsS https://order-tracking.kktree.cn/.well-known/oauth-protected-resource/mcp
-curl -fsS https://order-tracking.kktree.cn/.well-known/oauth-authorization-server
-curl -sS -o /dev/null -w '%{http_code}\n' -X POST https://order-tracking.kktree.cn/mcp -H 'Accept: application/json, text/event-stream' -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"read-only-check","version":"1"}}}'
-```
-
-随后用 Codex 本人登录查询 `get_me`。不把状态码检查当作本人授权、附件或业务验收。
+Codex 原生附件的实际下载主机尚未观测到，`ORDER_TRACKING_MCP_FILE_HOSTS` 的生效值未核验，上传与文件往返均待验收。须验证真实来源主机后按精确主机名配置，再验证同一 `.xlsx` 的上传、预览、确认与原件下载；生产业务写入和真实通知另需明确授权。
