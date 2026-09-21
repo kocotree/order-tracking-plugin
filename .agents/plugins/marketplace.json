@@ -1,0 +1,10 @@
+{
+  "name": "order-tracking",
+  "interface": {"displayName": "跟单管理系统"},
+  "plugins": [{
+    "name": "order-tracking",
+    "source": {"source": "local", "path": "./plugins/order-tracking"},
+    "policy": {"installation": "AVAILABLE", "authentication": "ON_USE"},
+    "category": "Productivity"
+  }]
+}
