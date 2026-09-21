@@ -1,6 +1,6 @@
 {
   "name": "order-tracking",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "以本人管理员身份在 Codex 操作跟单管理系统。",
   "author": {"name": "KOCOTREE"},
   "homepage": "https://github.com/kocotree/order-tracking-plugin",

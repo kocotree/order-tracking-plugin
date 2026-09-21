@@ -11,7 +11,7 @@ codex plugin marketplace add kocotree/order-tracking-plugin --ref main
 codex plugin add order-tracking@order-tracking
 ```
 
-安装后开启新的 Codex 任务，在插件目录确认 **跟单管理系统** 已启用，再请求“用跟单管理系统查询我的账号”。首次调用会打开浏览器；浏览器已有有效管理员网页登录时复用该登录，否则完成飞书登录后返回 Codex。每位管理员须用本人身份连接。不要分享账号、Cookie、token 或授权回调地址。
+安装后开启新的 Codex 任务，在插件目录确认 **跟单管理系统** 已启用，再请求“用跟单管理系统查询我的账号”。生产 MCP 入口启用后，首次调用会打开浏览器；浏览器已有有效管理员网页登录时复用该登录，否则完成飞书登录后返回 Codex。每位管理员须用本人身份连接。不要分享账号、Cookie、token 或授权回调地址。插件声明的 `kocotree-order-tracking-codex` 是公开 OAuth client ID，服务端须配置同值；它不包含 client secret。
 
 更新时执行 `codex plugin marketplace upgrade order-tracking`，再执行 `codex plugin add order-tracking@order-tracking` 并开启新任务。插件版本见 `plugins/order-tracking/.codex-plugin/plugin.json`；更新 Plugin 不会部署服务端。
 
