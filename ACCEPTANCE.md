@@ -6,7 +6,7 @@
 |---|---|---|
 | 五项 MCP 前置 | #151/#153/#154/#155/#156 已合并到上述 `main`；服务端测试结果见各 Issue 实施记录 | 服务端代码已合并 |
 | Plugin 结构与 Skill | plugin-creator `validate_plugin.py`、skill-creator `quick_validate.py`、JSON 解析与 `git diff --check` 通过 | 本地通过 |
-| 本机 Codex 安装 | `codex plugin add` 已加载 `0.1.1`；`codex mcp list` 可见远程 HTTP 服务。Plugin 声明公开 `oauth.clientId=kocotree-order-tracking-codex`，格式按 Codex 官方 MCP 文档核对 | 本机加载通过；生产 404 导致 OAuth 调用未验收 |
+| 本机 Codex 安装 | `codex plugin add` 已加载 `0.1.1`；`codex mcp list` 可见远程 HTTP 服务。`codex mcp login` 实际采用 Plugin 声明的 `client_id=kocotree-order-tracking-codex` 和正确的 resource；因生产元数据 404，在浏览器授权前终止，未保留临时授权 URL | 客户端 ID 传递通过；OAuth 完整握手待验收 |
 | 无登录生产入口 | `POST /mcp` 与 OAuth 两项元数据在 2026-09-21 返回应用 JSON 404。SSH 只读检查确认 v1.0.18 API 和前端容器健康、Nginx 有代理规则，但生产受保护配置及 API 容器均无 `ORDER_TRACKING_MCP_PUBLIC_URL`、`ORDER_TRACKING_MCP_CLIENT_ID`、`ORDER_TRACKING_MCP_FILE_HOSTS`；`/health/ready` 的 200 是前端 HTML | 已定位 MCP 未启用，阻塞真实连接 |
 | 本人 OAuth 与 30 天共同授权 | #151 曾在隔离环境以 CLI 0.149.1 验证登录；本 Plugin 尚未完成真实连接 | 待验收 |
 | 订单 456#、来源刷新、派工与合同 | 后端工具已合并；隔离 Codex 对话与业务回读 | 待验收 |
@@ -39,4 +39,12 @@ ORDER_TRACKING_MCP_CLIENT_ID=kocotree-order-tracking-codex
 
 保存配置后，以当前发布目录 `DEPLOY_DIR/releases/b1ee254b894c322689f0a2446b771ea1eb15ce7a/deploy` 执行 `docker compose --env-file .env.production -f compose.production.yaml config --quiet`，再以同一配置执行 `docker compose --env-file .env.production -f compose.production.yaml up -d --no-deps --no-build --wait --wait-timeout 180 api`。这会重建 API 容器，Web 与小程序的 API 请求可能短暂中断；worker 与前端容器不需重建。未获生产配置和重建授权前不执行。
 
-只读回验：API 容器健康；`GET /.well-known/oauth-protected-resource/mcp` 与 `GET /.well-known/oauth-authorization-server` 返回 200 且 resource/issuer 与生产地址一致；未授权 `POST /mcp` 返回 401 与 OAuth 挑战；再用 Codex 本人登录查询 `get_me`。不把状态码检查当作本人授权、附件或业务验收。
+只读回验：API 容器健康；`GET /.well-known/oauth-protected-resource/mcp` 与 `GET /.well-known/oauth-authorization-server` 返回 200 且 resource/issuer 与生产地址一致；未授权 `POST /mcp` 返回 401 与 OAuth 挑战。可在本机执行：
+
+```sh
+curl -fsS https://order-tracking.kktree.cn/.well-known/oauth-protected-resource/mcp
+curl -fsS https://order-tracking.kktree.cn/.well-known/oauth-authorization-server
+curl -sS -o /dev/null -w '%{http_code}\n' -X POST https://order-tracking.kktree.cn/mcp -H 'Accept: application/json, text/event-stream' -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"read-only-check","version":"1"}}}'
+```
+
+随后用 Codex 本人登录查询 `get_me`。不把状态码检查当作本人授权、附件或业务验收。
